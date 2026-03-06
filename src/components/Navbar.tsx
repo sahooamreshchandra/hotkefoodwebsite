@@ -79,15 +79,6 @@ const Navbar = () => {
               {link.label}
             </a>
           ))}
-          <a
-            href="#"
-            className={`ml-2 h-9 px-5 rounded-full text-sm font-bold transition-all duration-300 flex items-center border ${scrolled
-              ? "bg-primary text-white border-primary hover:bg-primary/90 shadow-glow"
-              : "bg-white/10 text-white border-white/20 backdrop-blur-md hover:bg-white/20"
-              }`}
-          >
-            Login
-          </a>
         </div>
 
         {/* Mobile toggle */}
