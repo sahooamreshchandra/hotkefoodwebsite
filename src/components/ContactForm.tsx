@@ -127,7 +127,7 @@ const ContactForm = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid sm:grid-cols-2 gap-6">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-gray-700 ml-1">
+                  <label className="text-xs font-extrabold text-gray-400 uppercase tracking-widest">
                     Full Name <span className="text-primary">*</span>
                   </label>
                   <Input
@@ -141,7 +141,7 @@ const ContactForm = () => {
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-gray-700 ml-1">
+                  <label className="text-xs font-extrabold text-gray-400 uppercase tracking-widest">
                     Email Address <span className="text-primary">*</span>
                   </label>
                   <Input
@@ -158,8 +158,8 @@ const ContactForm = () => {
               </div>
               <div className="grid sm:grid-cols-2 gap-6">
                 <div className="flex flex-col gap-1.5 opacity-60 focus-within:opacity-100 transition-opacity">
-                  <label className="text-sm font-semibold text-gray-700 ml-1">
-                    Phone Number <span className="text-gray-400 text-xs font-normal">(optional)</span>
+                  <label className="text-xs font-extrabold text-gray-400 uppercase tracking-widest">
+                    Phone Number <span className="text-gray-400 text-xs font-normal normal-case">(optional)</span>
                   </label>
                   <Input
                     name="phone"
@@ -172,8 +172,8 @@ const ContactForm = () => {
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-gray-700 ml-1">
-                    School Name <span className="text-gray-400 text-xs font-normal">(optional)</span>
+                  <label className="text-xs font-extrabold text-gray-400 uppercase tracking-widest">
+                    School Name <span className="text-gray-400 text-xs font-normal normal-case">(optional)</span>
                   </label>
                   <Input
                     name="school"
@@ -186,7 +186,7 @@ const ContactForm = () => {
                 </div>
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-gray-700 ml-1">
+                <label className="text-xs font-extrabold text-gray-400 uppercase tracking-widest">
                   How can we help? <span className="text-primary">*</span>
                 </label>
                 <Textarea
