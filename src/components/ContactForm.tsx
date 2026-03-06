@@ -192,7 +192,7 @@ const ContactForm = () => {
                   className="rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-primary focus:ring-primary/20 transition-all font-medium resize-none"
                 />
               </div>
-              {/* <Button
+              <Button
                 size="xl"
                 className="w-full h-14 font-bold bg-primary hover:bg-primary/95 text-white shadow-glow rounded-2xl text-lg group"
                 type="submit"
@@ -200,7 +200,7 @@ const ContactForm = () => {
               >
                 Send Message
                 <Send className="ml-2 w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-              </Button> */}
+              </Button>
             </form>
           </motion.div>
 
