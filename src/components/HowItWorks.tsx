@@ -50,7 +50,7 @@ const HowItWorks = () => {
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-display font-extrabold text-gray-900">
             Four simple steps to{" "}
             <span className="bg-gradient-to-r from-primary to-amber-400 bg-clip-text text-transparent">
-              happy lunches
+              happy and delicious food
             </span>
           </h2>
         </motion.div>
