@@ -126,8 +126,8 @@ const ContactForm = () => {
           >
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid sm:grid-cols-2 gap-6">
-                <div>
-                  <label className="text-xs font-extrabold text-gray-400 uppercase tracking-widest mb-2 block ml-1">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-gray-700 ml-1">
                     Full Name <span className="text-primary">*</span>
                   </label>
                   <Input
@@ -137,11 +137,11 @@ const ContactForm = () => {
                     onChange={handleChange}
                     maxLength={100}
                     required
-                    className="h-14 rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-primary focus:ring-primary/20 transition-all font-medium"
+                    className="h-12 rounded-2xl border-gray-200 bg-gray-50/50 focus:bg-white focus:border-primary focus:ring-primary/20 transition-all font-medium"
                   />
                 </div>
-                <div>
-                  <label className="text-xs font-extrabold text-gray-400 uppercase tracking-widest mb-2 block ml-1">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-gray-700 ml-1">
                     Email Address <span className="text-primary">*</span>
                   </label>
                   <Input
@@ -152,14 +152,14 @@ const ContactForm = () => {
                     onChange={handleChange}
                     maxLength={255}
                     required
-                    className="h-14 rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-primary focus:ring-primary/20 transition-all font-medium"
+                    className="h-12 rounded-2xl border-gray-200 bg-gray-50/50 focus:bg-white focus:border-primary focus:ring-primary/20 transition-all font-medium"
                   />
                 </div>
               </div>
               <div className="grid sm:grid-cols-2 gap-6">
-                <div>
-                  <label className="text-xs font-extrabold text-gray-400 uppercase tracking-widest mb-2 block ml-1">
-                    Phone Number
+                <div className="flex flex-col gap-1.5 opacity-60 focus-within:opacity-100 transition-opacity">
+                  <label className="text-sm font-semibold text-gray-700 ml-1">
+                    Phone Number <span className="text-gray-400 text-xs font-normal">(optional)</span>
                   </label>
                   <Input
                     name="phone"
@@ -168,12 +168,12 @@ const ContactForm = () => {
                     value={form.phone}
                     onChange={handleChange}
                     maxLength={15}
-                    className="h-14 rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-primary focus:ring-primary/20 transition-all font-medium"
+                    className="h-12 rounded-2xl border-gray-200 bg-gray-50/50 focus:bg-white focus:border-primary focus:ring-primary/20 transition-all font-medium"
                   />
                 </div>
-                <div>
-                  <label className="text-xs font-extrabold text-gray-400 uppercase tracking-widest mb-2 block ml-1">
-                    School Name
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-gray-700 ml-1">
+                    School Name <span className="text-gray-400 text-xs font-normal">(optional)</span>
                   </label>
                   <Input
                     name="school"
@@ -181,12 +181,12 @@ const ContactForm = () => {
                     value={form.school}
                     onChange={handleChange}
                     maxLength={150}
-                    className="h-14 rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-primary focus:ring-primary/20 transition-all font-medium"
+                    className="h-12 rounded-2xl border-gray-200 bg-gray-50/50 focus:bg-white focus:border-primary focus:ring-primary/20 transition-all font-medium"
                   />
                 </div>
               </div>
-              <div>
-                <label className="text-xs font-extrabold text-gray-400 uppercase tracking-widest mb-2 block ml-1">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-gray-700 ml-1">
                   How can we help? <span className="text-primary">*</span>
                 </label>
                 <Textarea
@@ -200,15 +200,15 @@ const ContactForm = () => {
                   className="rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-primary focus:ring-primary/20 transition-all font-medium resize-none"
                 />
               </div>
-              {/* <Button
+              <Button
                 size="xl"
                 className="w-full h-14 font-bold bg-primary hover:bg-primary/95 text-white shadow-glow rounded-2xl text-lg group"
                 type="submit"
                 disabled={sending}
               >
-                Send Message
+                {sending ? "Sending..." : "Send Message"}
                 <Send className="ml-2 w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-              </Button> */}
+              </Button>
             </form>
           </motion.div>
 
