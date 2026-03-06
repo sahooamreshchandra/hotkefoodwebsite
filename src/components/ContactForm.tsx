@@ -6,8 +6,9 @@ import { Mail, Phone, MessageCircle, Send, MapPin, Clock } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
-//const WHATSAPP_NUMBER = "917008401800";
-const WHATSAPP_NUMBER = "000000000000";
+// 🔧 REPLACE THIS with your deployed Google Apps Script Web App URL
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzJ8BgB4wDDwOmeQw-cA6tlV1PuEmho4fl6w38gIwINoGza4wneS19ssz3bpOI1NtzzGw/exec";
+const WHATSAPP_NUMBER = "917008401800";
 
 const ContactForm = () => {
   const { toast } = useToast();
@@ -26,7 +27,7 @@ const ContactForm = () => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!form.name.trim() || !form.email.trim() || !form.message.trim()) {
@@ -50,31 +51,38 @@ const ContactForm = () => {
 
     setSending(true);
 
-    const message = [
-      `🍱 *New Enquiry – hotkefood*`,
-      ``,
-      `👤 *Name:* ${form.name.trim()}`,
-      `📧 *Email:* ${form.email.trim()}`,
-      form.phone.trim() ? `📞 *Phone:* ${form.phone.trim()}` : null,
-      form.school.trim() ? `🏫 *School:* ${form.school.trim()}` : null,
-      ``,
-      `💬 *Message:*`,
-      form.message.trim(),
-    ]
-      .filter((line) => line !== null)
-      .join("\n");
+    try {
+      const payload = {
+        name: form.name.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim() || "—",
+        school: form.school.trim() || "—",
+        message: form.message.trim(),
+        submittedAt: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
+      };
 
-    window.open(
-      `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`,
-      "_blank"
-    );
+      await fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-    toast({
-      title: "Opening WhatsApp",
-      description: "Your enquiry is ready to send on WhatsApp!",
-    });
+      toast({
+        title: "Message sent! 🎉",
+        description: "We've received your enquiry and will get back to you within 24 hours.",
+      });
 
-    setSending(false);
+      setForm({ name: "", email: "", phone: "", school: "", message: "" });
+    } catch {
+      toast({
+        title: "Something went wrong",
+        description: "Please try WhatsApp or call us directly.",
+        variant: "destructive",
+      });
+    } finally {
+      setSending(false);
+    }
   };
 
   const openWhatsApp = () => {
@@ -101,7 +109,7 @@ const ContactForm = () => {
             📩 Get In Touch
           </span>
           <h2 className="text-3xl md:text-5xl font-display font-extrabold text-gray-900 tracking-tight leading-tight">
-            Ready to <span className="text-primary">upgrade</span> school lunches?
+            Ready to <span className="text-primary">upgrade</span> school Tiffin Boxes?
           </h2>
           <p className="text-gray-500 mt-6 text-lg font-medium">
             Join the hotkefood family. Reach out today and we'll get back to you within 24 hours.
