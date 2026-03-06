@@ -12,7 +12,7 @@ const Footer = () => {
           <div className="flex items-center gap-4 shrink-0">
             <img src={logo} alt="hotkefood logo" className="h-8 w-8 object-contain rounded-lg shadow-glow" />
             <p className="text-white/70 text-sm font-medium whitespace-nowrap">
-              © {new Date().getFullYear()} hotkefood. All rights reserved.
+              © {new Date().getFullYear()}              hotke<span className="text-primary">food</span>. All rights reserved.
             </p>
           </div>
 
@@ -20,7 +20,7 @@ const Footer = () => {
           {/* Legal Disclaimer */}
           <div className="max-w-xl">
             <p className="text-white/30 text-[9px] leading-relaxed uppercase tracking-wider lg:text-right">
-              hotkefood is a proposed partnership firm. Partnership registration is under process.
+              hotke<span className="text-primary/70">food</span> is a proposed partnership firm. Partnership registration is under process.
               Food services will commence only after obtaining all required registrations including FSSAI.
             </p>
           </div>

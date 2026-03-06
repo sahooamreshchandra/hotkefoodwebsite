@@ -63,7 +63,7 @@ const features = [
     icon: Smartphone,
     title: "Smart Mobile App",
     description:
-      "Manage and schedule orders on your phone.",
+      "App is lunching soon.",
     accent: "hsl(25,100%,50%)",
     iconBg: "bg-orange-50",
     iconColor: "text-primary",
@@ -109,7 +109,7 @@ const Features = () => {
             </span>
           </h2>
           <p className="text-gray-500 mt-4 text-lg max-w-lg mx-auto leading-relaxed">
-            Everything your child needs for a great lunch — without the morning rush.
+            Everything your child needs for a great Breakfast and lunch — without the morning rush.
           </p>
         </motion.div>
 

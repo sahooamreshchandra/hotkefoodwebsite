@@ -7,7 +7,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 // 🔧 REPLACE THIS with your deployed Google Apps Script Web App URL
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzJ8BgB4wDDwOmeQw-cA6tlV1PuEmho4fl6w38gIwINoGza4wneS19ssz3bpOI1NtzzGw/exec";
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz60HYEQqVkwqIccKT5qOOyogm51Avt-MHi8tjeT-qNYZnpVoFf-nVDMCG8AXM9nV5Lpg/exec";
 const WHATSAPP_NUMBER = "917008401800";
 
 const ContactForm = () => {
@@ -17,6 +17,8 @@ const ContactForm = () => {
     email: "",
     phone: "",
     school: "",
+    studentClass: "",
+    section: "",
     message: "",
   });
   const [sending, setSending] = useState(false);
@@ -57,6 +59,8 @@ const ContactForm = () => {
         email: form.email.trim(),
         phone: form.phone.trim() || "—",
         school: form.school.trim() || "—",
+        studentClass: form.studentClass.trim() || "—",
+        section: form.section.trim() || "—",
         message: form.message.trim(),
         submittedAt: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
       };
@@ -73,7 +77,7 @@ const ContactForm = () => {
         description: "We've received your enquiry and will get back to you within 24 hours.",
       });
 
-      setForm({ name: "", email: "", phone: "", school: "", message: "" });
+      setForm({ name: "", email: "", phone: "", school: "", studentClass: "", section: "", message: "" });
     } catch {
       toast({
         title: "Something went wrong",
@@ -112,7 +116,7 @@ const ContactForm = () => {
             Ready to <span className="text-primary">upgrade</span> school Tiffin Boxes?
           </h2>
           <p className="text-gray-500 mt-6 text-lg font-medium">
-            Join the hotkefood family. Reach out today and we'll get back to you within 24 hours.
+            Join the hotke<span className="text-primary">food</span> family. Reach out today and we'll get back to you within 24 hours.
           </p>
         </motion.div>
 
@@ -122,12 +126,12 @@ const ContactForm = () => {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="lg:col-span-3 bg-white rounded-[2.5rem] p-8 md:p-12 border border-gray-100 shadow-elevated"
+            className="lg:col-span-3 bg-white p-8 md:p-12 border border-gray-100 shadow-elevated"
           >
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid sm:grid-cols-2 gap-6">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-extrabold text-gray-400 uppercase tracking-widest">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <label className="text-xs font-extrabold text-gray-400 uppercase tracking-widest sm:w-24 shrink-0">
                     Full Name <span className="text-primary">*</span>
                   </label>
                   <Input
@@ -137,12 +141,12 @@ const ContactForm = () => {
                     onChange={handleChange}
                     maxLength={100}
                     required
-                    className="h-12 rounded-2xl border-gray-200 bg-gray-50/50 focus:bg-white focus:border-primary focus:ring-primary/20 transition-all font-medium"
+                    className="h-12 rounded-none border-gray-200 bg-gray-50/50 focus:bg-white focus:border-primary focus:ring-primary/20 transition-all font-medium"
                   />
                 </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-extrabold text-gray-400 uppercase tracking-widest">
-                    Email Address <span className="text-primary">*</span>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <label className="text-xs font-extrabold text-gray-400 uppercase tracking-widest sm:w-28 shrink-0">
+                    Email <span className="text-primary">*</span>
                   </label>
                   <Input
                     name="email"
@@ -152,14 +156,14 @@ const ContactForm = () => {
                     onChange={handleChange}
                     maxLength={255}
                     required
-                    className="h-12 rounded-2xl border-gray-200 bg-gray-50/50 focus:bg-white focus:border-primary focus:ring-primary/20 transition-all font-medium"
+                    className="h-12 rounded-none border-gray-200 bg-gray-50/50 focus:bg-white focus:border-primary focus:ring-primary/20 transition-all font-medium"
                   />
                 </div>
               </div>
               <div className="grid sm:grid-cols-2 gap-6">
-                <div className="flex flex-col gap-1.5 opacity-60 focus-within:opacity-100 transition-opacity">
-                  <label className="text-xs font-extrabold text-gray-400 uppercase tracking-widest">
-                    Phone Number <span className="text-gray-400 text-xs font-normal normal-case">(optional)</span>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 opacity-60 focus-within:opacity-100 transition-opacity">
+                  <label className="text-xs font-extrabold text-gray-400 uppercase tracking-widest sm:w-24 shrink-0">
+                    Phone <span className="text-gray-400 text-[10px] lowercase font-normal">(opt)</span>
                   </label>
                   <Input
                     name="phone"
@@ -168,26 +172,52 @@ const ContactForm = () => {
                     value={form.phone}
                     onChange={handleChange}
                     maxLength={15}
-                    className="h-12 rounded-2xl border-gray-200 bg-gray-50/50 focus:bg-white focus:border-primary focus:ring-primary/20 transition-all font-medium"
+                    className="h-12 rounded-none border-gray-200 bg-gray-50/50 focus:bg-white focus:border-primary focus:ring-primary/20 transition-all font-medium"
                   />
                 </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-extrabold text-gray-400 uppercase tracking-widest">
-                    School Name <span className="text-gray-400 text-xs font-normal normal-case">(optional)</span>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <label className="text-xs font-extrabold text-gray-400 uppercase tracking-widest sm:w-28 shrink-0">
+                    School <span className="text-gray-400 text-[10px] lowercase font-normal">(opt)</span>
                   </label>
                   <Input
                     name="school"
-                    placeholder="Child's school name"
+                    placeholder="School name"
                     value={form.school}
                     onChange={handleChange}
                     maxLength={150}
-                    className="h-12 rounded-2xl border-gray-200 bg-gray-50/50 focus:bg-white focus:border-primary focus:ring-primary/20 transition-all font-medium"
+                    className="h-12 rounded-none border-gray-200 bg-gray-50/50 focus:bg-white focus:border-primary focus:ring-primary/20 transition-all font-medium"
                   />
                 </div>
               </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-extrabold text-gray-400 uppercase tracking-widest">
-                  How can we help? <span className="text-primary">*</span>
+              <div className="grid sm:grid-cols-2 gap-6">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <label className="text-xs font-extrabold text-gray-400 uppercase tracking-widest sm:w-24 shrink-0">
+                    Class <span className="text-gray-400 text-[10px] lowercase font-normal">(opt)</span>
+                  </label>
+                  <Input
+                    name="studentClass"
+                    placeholder="e.g. 5th"
+                    value={form.studentClass}
+                    onChange={handleChange}
+                    className="h-12 rounded-none border-gray-200 bg-gray-50/50 focus:bg-white focus:border-primary focus:ring-primary/20 transition-all font-medium"
+                  />
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <label className="text-xs font-extrabold text-gray-400 uppercase tracking-widest sm:w-28 shrink-0">
+                    Section <span className="text-gray-400 text-[10px] lowercase font-normal">(opt)</span>
+                  </label>
+                  <Input
+                    name="section"
+                    placeholder="e.g. A"
+                    value={form.section}
+                    onChange={handleChange}
+                    className="h-12 rounded-none border-gray-200 bg-gray-50/50 focus:bg-white focus:border-primary focus:ring-primary/20 transition-all font-medium"
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <label className="text-xs font-extrabold text-gray-400 uppercase tracking-widest sm:w-24 shrink-0 pt-3">
+                  Message <span className="text-primary">*</span>
                 </label>
                 <Textarea
                   name="message"
@@ -197,12 +227,12 @@ const ContactForm = () => {
                   rows={5}
                   maxLength={1000}
                   required
-                  className="rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-primary focus:ring-primary/20 transition-all font-medium resize-none"
+                  className="rounded-none border-gray-100 bg-gray-50/50 focus:bg-white focus:border-primary focus:ring-primary/20 transition-all font-medium resize-none"
                 />
               </div>
               <Button
                 size="xl"
-                className="w-full h-14 font-bold bg-primary hover:bg-primary/95 text-white shadow-glow rounded-2xl text-lg group"
+                className="w-full h-14 font-bold bg-primary hover:bg-primary/95 text-white shadow-glow rounded-none text-lg group"
                 type="submit"
                 disabled={sending}
               >
