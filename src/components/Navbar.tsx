@@ -36,11 +36,15 @@ const Navbar = () => {
   }, []);
 
   const links = [
-    { label: "How It Works", href: "#how-it-works", id: "how-it-works" },
-    { label: "Contact", href: "#contact", id: "contact" },
+    { label: "How It Works", href: "/#how-it-works", id: "how-it-works" },
+    { label: "Contact", href: "/#contact", id: "contact" },
+    { label: "Orders", href: "/order", id: "order" },
   ];
 
-  const isActive = (id: string) => activeSection === id;
+  const isActive = (id: string) => {
+    if (id === "order") return window.location.pathname === "/order";
+    return activeSection === id && window.location.pathname === "/";
+  };
 
   return (
     <motion.nav
@@ -52,7 +56,7 @@ const Navbar = () => {
         }`}
     >
       <div className="container mx-auto flex items-center justify-between h-16 px-4">
-        <a href="#" className="flex items-center gap-2.5 group">
+        <a href="/" className="flex items-center gap-2.5 group">
           <div className="w-11 h-11 rounded-xl bg-white/15 backdrop-blur-sm border border-white/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-glow overflow-hidden">
             <img src={logo} alt="hotkefood logo" className="h-10 w-10 object-contain" />
           </div>

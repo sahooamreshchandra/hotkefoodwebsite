@@ -6,7 +6,6 @@ import { Mail, Phone, MessageCircle, Send, MapPin, Clock } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
-// 🔧 REPLACE THIS with your deployed Google Apps Script Web App URL
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz60HYEQqVkwqIccKT5qOOyogm51Avt-MHi8tjeT-qNYZnpVoFf-nVDMCG8AXM9nV5Lpg/exec";
 const WHATSAPP_NUMBER = "917008401800";
 
@@ -259,7 +258,7 @@ const ContactForm = () => {
                 </p>
 
                 <div className="space-y-4">
-                  {/* <button
+                  <button
                     onClick={openWhatsApp}
                     className="flex items-center gap-4 w-full p-4 rounded-[1.5rem] bg-white/5 border border-white/10 hover:bg-white/10 transition-all group"
                   >
@@ -268,11 +267,11 @@ const ContactForm = () => {
                     </div>
                     <div className="text-left">
                       <p className="text-[10px] font-extrabold text-white/40 uppercase tracking-widest">WhatsApp</p>
-                      <p className="font-bold text-lg">+91 70084 01800</p>
+                      <p className="font-bold text-lg">{WHATSAPP_NUMBER}</p>
                     </div>
-                  </button> */}
+                  </button>
 
-                  {/* <a
+                  <a
                     href="tel:+917008401800"
                     className="flex items-center gap-4 w-full p-4 rounded-[1.5rem] bg-white/5 border border-white/10 hover:bg-white/10 transition-all group"
                   >
@@ -281,9 +280,9 @@ const ContactForm = () => {
                     </div>
                     <div className="text-left">
                       <p className="text-[10px] font-extrabold text-white/40 uppercase tracking-widest">Call Us</p>
-                      <p className="font-bold text-lg">+91 70084 01800</p>
+                      <p className="font-bold text-lg">{WHATSAPP_NUMBER}</p>
                     </div>
-                  </a> */}
+                  </a>
 
                   <a
                     href="mailto:hotkefood@gmail.com"

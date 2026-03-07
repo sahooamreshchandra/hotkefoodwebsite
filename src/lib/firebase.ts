@@ -3,13 +3,13 @@ import { getFirestore } from "firebase/firestore";
 
 // ⚠️ IMPORTANT: Replace this with your actual Firebase config from the console
 const firebaseConfig = {
-    apiKey: "AIzaSyDhmIr8WtRta-kl4j7_XCw-wurR7XMtaaU",
-    authDomain: "hotkefoods.firebaseapp.com",
-    projectId: "hotkefoods",
-    storageBucket: "hotkefoods.firebasestorage.app",
-    messagingSenderId: "949704232396",
-    appId: "1:949704232396:web:55ef1b3ffdfcda561a6169",
-    measurementId: "G-1T0ZPC36Q7"
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID,
+    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
 const app = initializeApp(firebaseConfig);
