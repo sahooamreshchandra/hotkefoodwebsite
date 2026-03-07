@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { collection, onSnapshot, query, orderBy, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Download, RefreshCw, PackageCheck, LayoutDashboard, Database, ChevronRight, FileText, FileJson, Printer, ChevronDown, Table as TableIcon, FileSpreadsheet } from "lucide-react";
+import { Search, Download, RefreshCw, PackageCheck, LayoutDashboard, Database, ChevronRight, FileText, FileJson, Printer, ChevronDown, Table as TableIcon, FileSpreadsheet, ShieldAlert, ShieldCheck, Lock } from "lucide-react";
 import { AgGridReact } from "ag-grid-react";
 import { ColDef, ModuleRegistry, AllCommunityModule } from "ag-grid-community";
 import "ag-grid-community/styles/ag-grid.css";
@@ -115,7 +115,19 @@ const Order = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [searchText, setSearchText] = useState("");
+    const [isAuthorized, setIsAuthorized] = useState<boolean | null>(false); // Start locked
+    const [enteredKey, setEnteredKey] = useState("");
     const gridRef = useRef<AgGridReact<any>>(null);
+
+    const handleVerify = () => {
+        const secretGuid = import.meta.env.VITE_ORDER_PAGE_ACCESS_KEY;
+        if (!secretGuid || enteredKey === secretGuid) {
+            setIsAuthorized(true);
+        } else {
+            alert("❌ Invalid Access Key");
+            setEnteredKey("");
+        }
+    };
 
     const detailedOrders = useMemo(() => {
         return orders.map((order, index) => {
@@ -675,6 +687,48 @@ const Order = () => {
         }
     }), []);
 
+    if (isAuthorized === false && import.meta.env.VITE_ORDER_PAGE_ACCESS_KEY) {
+        return (
+            <div className="h-screen w-screen bg-slate-950 flex items-center justify-center font-display p-6 overflow-hidden">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="max-w-md w-full bg-slate-900 border border-slate-800 p-12 text-center shadow-2xl relative"
+                >
+                    <div className="w-20 h-20 bg-primary/10 text-primary flex items-center justify-center mx-auto mb-8 rounded-full border border-primary/20">
+                        <Lock size={40} />
+                    </div>
+                    <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-4">Terminal Locked</h2>
+                    <p className="text-slate-400 text-sm leading-relaxed mb-8">
+                        This environment is protected. Please enter your administrator access key to continue.
+                    </p>
+
+                    <div className="space-y-4">
+                        <input
+                            type="password"
+                            placeholder="Enter Security GUID..."
+                            className="w-full bg-slate-950 border border-slate-800 h-14 px-6 text-white text-center font-mono tracking-widest focus:outline-none focus:border-primary transition-all text-lg"
+                            value={enteredKey}
+                            onChange={(e) => setEnteredKey(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleVerify()}
+                            autoFocus
+                        />
+                        <button
+                            onClick={handleVerify}
+                            className="w-full bg-primary hover:bg-orange-600 h-14 text-white font-black uppercase tracking-widest transition-all shadow-lg shadow-primary/20"
+                        >
+                            Verify Access
+                        </button>
+                    </div>
+
+                    <div className="pt-12 mt-8 border-t border-slate-800">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-600 italic">hotkefood security gateway v2.1</p>
+                    </div>
+                </motion.div>
+            </div>
+        );
+    }
+
     return (
         <div className="h-screen w-screen bg-slate-50 flex flex-col overflow-hidden font-display selection:bg-primary/20">
             {/* NO NAVBAR FOR FULL-SCREEN DASHBOARD */}
@@ -685,7 +739,7 @@ const Order = () => {
                     animate={{ opacity: 1 }}
                     className="flex-grow flex flex-col p-4 md:p-8 overflow-hidden"
                 >
-                    {/* MODERN ENTERPRISE HEADER */}
+                    {/* modern enterprise header */}
                     <div className="flex flex-col md:flex-row justify-between items-center gap-8 mb-8 pb-8 border-b border-slate-200">
                         <div className="flex items-center gap-6">
                             <div className="w-16 h-16 bg-slate-900 flex items-center justify-center text-white shadow-xl">
@@ -771,14 +825,11 @@ const Order = () => {
                 </motion.div>
             </main>
 
-            {/* NO FOOTER FOR FULL-SCREEN DASHBOARD */}
-
             <style>{`
                 @media print {
                   nav, footer { display: none !important; }
                 }
 
-                /* === AG-GRID ALPINE THEME OVERRIDES === */
                 .ag-theme-alpine {
                     --ag-background-color: #ffffff;
                     --ag-odd-row-background-color: #fafbfc;
@@ -798,7 +849,6 @@ const Order = () => {
                     border: 1px solid #e2e8f0;
                 }
 
-                /* === HEADER CENTERING (THE CORRECT WAY) === */
                 .ag-theme-alpine .ag-header-cell {
                     padding: 0 !important;
                     background: #f1f5f9;
@@ -825,7 +875,6 @@ const Order = () => {
                     width: 100% !important;
                 }
 
-                /* === FLOATING FILTER (MINIMALIST) === */
                 .ag-theme-alpine .ag-floating-filter {
                     padding: 4px 8px !important;
                     background: #f8fafc;
@@ -841,30 +890,26 @@ const Order = () => {
                     color: transparent !important;
                 }
 
-                /* === CELL CENTERING (THE CORRECT WAY) === */
                 .ag-theme-alpine .ag-cell {
                     display: flex !important;
                     align-items: center !important;
                     justify-content: center !important;
                     text-align: center !important;
-                    padding: 0 !important; /* CRITICAL */
+                    padding: 0 !important;
                     border-right: 1px solid #f1f5f9 !important;
                 }
 
-                /* === ROW STYLING === */
                 .ag-theme-alpine .ag-row {
                     border-bottom: 1px solid #f1f5f9 !important;
                 }
                 .ag-theme-alpine .ag-row-odd { background-color: #fafbfc; }
                 .ag-theme-alpine .ag-row-even { background-color: #ffffff; }
 
-                /* === PINNED COLUMN FIX === */
                 .ag-pinned-left-cols-container {
                     border-right: 2px solid #e2e8f0 !important;
                     box-shadow: 4px 0 10px rgba(0,0,0,0.02) !important;
                 }
 
-                /* === SCROLLBAR === */
                 .ag-body-viewport::-webkit-scrollbar { width: 8px; height: 8px; }
                 .ag-body-viewport::-webkit-scrollbar-track { background: #f8fafc; }
                 .ag-body-viewport::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }

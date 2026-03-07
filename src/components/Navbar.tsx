@@ -38,7 +38,6 @@ const Navbar = () => {
   const links = [
     { label: "How It Works", href: "/#how-it-works", id: "how-it-works" },
     { label: "Contact", href: "/#contact", id: "contact" },
-    { label: "Orders", href: "/order", id: "order" },
   ];
 
   const isActive = (id: string) => {
