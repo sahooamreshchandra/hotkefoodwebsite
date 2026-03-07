@@ -184,7 +184,8 @@ const Order = () => {
             // Format fulfillment date (Ordered For)
             let fulfillmentDateFormatted = "N/A";
             try {
-                const fDate = listing?.date;
+                // Priority: order.miscDate (for misc orders) then listing.date (for listing orders)
+                const fDate = (order as any).miscDate || listing?.date;
                 if (fDate) {
                     const dateObj = fDate instanceof Timestamp ? fDate.toDate() : new Date(fDate);
                     if (!isNaN(dateObj.getTime())) {
@@ -266,7 +267,14 @@ const Order = () => {
     }, [orders, schools, children, cities]);
 
     const exportToExcel = () => {
-        const worksheet = XLSX.utils.json_to_sheet(detailedOrders.map(o => ({
+        if (!gridRef.current?.api) return;
+
+        const filteredData: any[] = [];
+        gridRef.current.api.forEachNodeAfterFilter((node) => {
+            if (node.data) filteredData.push(node.data);
+        });
+
+        const worksheet = XLSX.utils.json_to_sheet(filteredData.map(o => ({
             OrderID: o.id,
             OrderDate: o.formattedDate,
             OrderedFor: o.fulfillmentDateFormatted,
@@ -287,46 +295,176 @@ const Order = () => {
     };
 
     const exportToPdf = () => {
-        const doc = new jsPDF('l', 'mm', 'a4');
-        doc.text("Hotke Food - Advanced Order Report", 14, 15);
+        try {
+            if (!gridRef.current?.api) return;
 
-        const tableData = detailedOrders.map(o => [
-            o.id,
-            o.formattedDate,
-            o.fulfillmentDateFormatted,
-            o.orderedBy,
-            o.category,
-            o.cityName,
-            o.schoolName,
-            o.className,
-            o.sectionName,
-            o.childName,
-            o.fullItems,
-            o.totalAmount,
-            o.status.toUpperCase()
-        ]);
+            const filteredData: any[] = [];
+            gridRef.current.api.forEachNodeAfterFilter((node) => {
+                if (node.data) filteredData.push(node.data);
+            });
 
-        autoTable(doc, {
-            head: [['OrderId', 'OrderDate', 'OrderedFor', 'OrderedBy', 'Category', 'City', 'School', 'Class', 'Section', 'ChildName', 'FoodItem', 'Amount', 'Status']],
-            body: tableData,
-            startY: 25,
-            theme: 'grid',
-            headStyles: { fillColor: [255, 107, 0] },
-            styles: { fontSize: 6.5 } // Slightly smaller font for more columns
-        });
+            console.log("📄 Starting All Details PDF Export...");
+            const doc = new jsPDF('l', 'mm', 'a4');
+            const totalAmount = filteredData.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+            const primaryOrange = [255, 107, 0] as [number, number, number];
 
-        doc.save(`hotkefood_orders_extended_${new Date().toISOString().split('T')[0]}.pdf`);
+            // Branding - 'hotkefood' (lowercase, single word)
+            doc.setFontSize(26);
+            doc.setTextColor(primaryOrange[0], primaryOrange[1], primaryOrange[2]);
+            doc.setFont("helvetica", "bold");
+            doc.text("hotkefood", 14, 18);
+
+            // Report Title
+            doc.setFontSize(10);
+            doc.setTextColor(51, 65, 85);
+            doc.text("OFFICIAL ORDER MANAGEMENT REPORT (ALL DETAILS)", 14, 24);
+
+            // Decorative Line
+            doc.setDrawColor(226, 232, 240);
+            doc.line(14, 27, 283, 27);
+
+            // Stats Summary
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(71, 85, 105);
+            doc.text(`Visible Records: ${filteredData.length}`, 14, 34);
+            doc.text(`Filtered Collection: Rs. ${totalAmount.toLocaleString()}`, 14, 38);
+            doc.text(`Report Generated: ${new Date().toLocaleString()}`, 210, 38);
+
+            // DATA MAPPING
+            const tableData = filteredData.map(o => [
+                String(o.formattedDate || ""),
+                String(o.fulfillmentDateFormatted || ""),
+                String(o.orderedBy || ""),
+                String(o.category || ""),
+                String(o.cityName || "N/A"),
+                String(o.schoolName || ""),
+                String(o.className || "N/A"),
+                String(o.sectionName || "N/A"),
+                String(o.childName || ""),
+                String(o.fullItems || ""),
+                String(o.totalAmount || 0),
+                String(o.status || "").toUpperCase()
+            ]);
+
+            autoTable(doc, {
+                head: [['OrderDate', 'OrderedFor', 'OrderedBy', 'Category', 'City', 'School', 'Class', 'Section', 'ChildName', 'FoodItem', 'Amount', 'Status']],
+                body: tableData,
+                startY: 42,
+                theme: 'grid',
+                tableWidth: 'auto',
+                headStyles: {
+                    fillColor: primaryOrange,
+                    textColor: [255, 255, 255],
+                    fontSize: 7.5,
+                    fontStyle: 'bold',
+                    halign: 'center',
+                    valign: 'middle'
+                },
+                styles: {
+                    fontSize: 7.5,
+                    cellPadding: 2,
+                    valign: 'middle',
+                    halign: 'center',
+                    lineColor: [226, 232, 240],
+                    lineWidth: 0.1,
+                    overflow: 'linebreak'
+                },
+                columnStyles: {
+                    9: { halign: 'center' }
+                },
+                didDrawPage: (data) => {
+                    const str = "Page " + doc.getNumberOfPages();
+                    doc.setFontSize(8);
+                    doc.setTextColor(100, 116, 139);
+                    doc.text(str, data.settings.margin.left, doc.internal.pageSize.height - 10);
+                }
+            });
+
+            console.log("💾 Triggering details PDF save...");
+            doc.save(`HOTKE_DETAILS_${new Date().toISOString().split('T')[0]}.pdf`);
+        } catch (err) {
+            console.error("❌ PDF Error:", err);
+            alert("Export Error: " + (err instanceof Error ? err.message : String(err)));
+        }
     };
 
-    const exportJson = () => {
-        const blob = new Blob([JSON.stringify(detailedOrders, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `hotkefood_orders_detailed_${new Date().toISOString().split('T')[0]}.json`;
-        link.click();
-        URL.revokeObjectURL(url);
+    const exportToLabels = () => {
+        try {
+            if (!gridRef.current?.api) return;
+
+            const filteredData: any[] = [];
+            gridRef.current.api.forEachNodeAfterFilter((node) => {
+                if (node.data) filteredData.push(node.data);
+            });
+
+            console.log("🏷️ Starting Lunch Box Label Export...");
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const primaryOrange = [255, 107, 0] as [number, number, number];
+
+            const labelWidth = 90;
+            const labelHeight = 55;
+            const margin = 10;
+            const gap = 5;
+
+            let x = margin;
+            let y = margin;
+
+            filteredData.forEach((order, index) => {
+                if (index > 0 && index % 10 === 0) {
+                    doc.addPage();
+                    x = margin;
+                    y = margin;
+                }
+
+                doc.setDrawColor(226, 232, 240);
+                doc.setLineWidth(0.5);
+                doc.rect(x, y, labelWidth, labelHeight);
+
+                doc.setFontSize(10);
+                doc.setTextColor(primaryOrange[0], primaryOrange[1], primaryOrange[2]);
+                doc.setFont("helvetica", "bold");
+                doc.text("hotkefood", x + 5, y + 8);
+
+                doc.setFontSize(8);
+                doc.setTextColor(100, 116, 139);
+                doc.setFont("helvetica", "normal");
+                doc.text(order.fulfillmentDateFormatted || "", x + labelWidth - 25, y + 8);
+
+                doc.setFontSize(12);
+                doc.setTextColor(15, 23, 42);
+                doc.setFont("helvetica", "bold");
+                doc.text(order.childName || "STAFF", x + 5, y + 18);
+
+                doc.setFontSize(9);
+                doc.setTextColor(51, 65, 85);
+                doc.text(`${order.schoolName}`, x + 5, y + 24);
+                doc.text(`Grade ${order.className || 'N/A'} - ${order.sectionName || 'N/A'}`, x + 5, y + 29);
+
+                doc.setDrawColor(241, 245, 249);
+                doc.line(x + 5, y + 33, x + labelWidth - 5, y + 33);
+
+                doc.setFontSize(10);
+                doc.setTextColor(primaryOrange[0], primaryOrange[1], primaryOrange[2]);
+                doc.setFont("helvetica", "bold");
+                doc.text(order.fullItems || "", x + 5, y + 42, { maxWidth: labelWidth - 10 });
+
+                if (index % 2 === 0) {
+                    x += labelWidth + gap;
+                } else {
+                    x = margin;
+                    y += labelHeight + gap;
+                }
+            });
+
+            doc.save(`HOTKE_LABELS_${new Date().toISOString().split('T')[0]}.pdf`);
+        } catch (err) {
+            console.error("❌ Label Error:", err);
+            alert("Label Export Error: " + (err instanceof Error ? err.message : String(err)));
+        }
     };
+
+    // Removed exportJson as requested
 
     useEffect(() => {
         console.log("🔍 SYNCING LIVE ORDER DATABASE & METADATA");
@@ -412,130 +550,128 @@ const Order = () => {
     const columnDefs = useMemo<ColDef[]>(() => [
         {
             field: "id",
-            headerName: "OrderID",
-            width: 140,
-            minWidth: 140,
-            cellClass: "font-mono text-[10px] text-slate-400 font-bold",
-            pinned: 'left'
+            headerName: "ORDER ID",
+            cellClass: "font-mono text-[10px] text-slate-500 font-bold tracking-tight",
+            pinned: 'left',
+            filter: 'agTextColumnFilter',
+            floatingFilter: true
         },
         {
             field: "formattedDate",
             headerName: "ORDER DATE",
-            width: 130,
-            minWidth: 130,
-            cellClass: "text-slate-400 font-bold text-xs"
+            cellClass: "text-slate-400 font-medium text-[11px]",
+            filter: 'agDateColumnFilter',
+            floatingFilter: true
         },
         {
             field: "fulfillmentDateFormatted",
             headerName: "ORDERED FOR",
-            width: 130,
-            minWidth: 130,
-            cellClass: "text-primary font-bold text-xs"
+            cellClass: "text-orange-600 font-bold text-[11px]",
+            filter: 'agDateColumnFilter',
+            floatingFilter: true
         },
         {
             field: "orderedBy",
             headerName: "ORDERED BY",
-            width: 150,
-            minWidth: 150,
-            cellClass: "font-medium text-slate-700"
+            cellClass: "font-semibold text-slate-800 text-[12px]",
+            filter: 'agTextColumnFilter',
+            floatingFilter: true
         },
         {
             field: "category",
             headerName: "CATEGORY",
-            width: 150,
-            minWidth: 150,
-            cellClass: "text-slate-500 uppercase font-black text-[10px]"
+            cellClass: "text-slate-500 font-black text-[10px] uppercase",
+            filter: 'agTextColumnFilter',
+            floatingFilter: true
         },
         {
             field: "cityName",
             headerName: "CITY",
-            width: 130,
-            minWidth: 130,
-            cellClass: "text-slate-400 uppercase tracking-tighter"
+            cellClass: "text-slate-400 font-medium tracking-wide text-[11px] uppercase",
+            filter: 'agTextColumnFilter',
+            floatingFilter: true
         },
         {
             field: "schoolName",
             headerName: "SCHOOL",
-            width: 180,
-            minWidth: 180,
-            cellClass: "font-medium text-slate-600"
+            cellClass: "font-medium text-slate-700 text-[12px]",
+            filter: 'agTextColumnFilter',
+            floatingFilter: true
         },
         {
             field: "className",
             headerName: "CLASS",
-            width: 110,
-            minWidth: 110,
-            cellClass: "text-slate-500 font-bold"
+            cellClass: "text-slate-600 font-bold text-[12px]",
+            filter: 'agTextColumnFilter',
+            floatingFilter: true
         },
         {
             field: "sectionName",
             headerName: "SECTION",
-            width: 110,
-            minWidth: 110,
-            cellClass: "text-slate-500 font-bold"
+            cellClass: "text-slate-600 font-bold text-[12px]",
+            filter: 'agTextColumnFilter',
+            floatingFilter: true
         },
         {
             field: "childName",
             headerName: "CHILDNAME",
-            width: 170,
-            minWidth: 170,
-            cellClass: "font-bold text-primary"
+            cellClass: "font-black text-primary text-[13px] uppercase tracking-tight",
+            filter: 'agTextColumnFilter',
+            floatingFilter: true
         },
         {
             headerName: "FOODITEM",
             flex: 1,
-            minWidth: 300,
             field: "fullItems",
-            cellClass: "text-slate-500 font-medium text-sm italic"
+            cellClass: "text-slate-500 font-medium text-[11px] italic leading-tight",
+            filter: 'agTextColumnFilter',
+            floatingFilter: true
         },
         {
             field: "totalAmount",
             headerName: "AMOUNT",
-            width: 120,
-            minWidth: 120,
             valueFormatter: (params) => `₹${params.value?.toLocaleString()}`,
-            cellClass: "font-mono font-black text-slate-900"
+            cellClass: "font-mono font-black text-slate-900 text-[14px]",
+            filter: 'agNumberColumnFilter',
+            floatingFilter: true
         },
         {
             field: "status",
             headerName: "STATUS",
-            width: 150,
-            minWidth: 150,
             cellRenderer: (params: any) => {
                 const status = params.value?.toLowerCase();
-                const colors: Record<string, string> = {
-                    delivered: "bg-[#ECFDF5] text-[#059669] border-[#D1FAE5]",
-                    processing: "bg-[#EFF6FF] text-[#2563EB] border-[#DBEAFE]",
-                    preparing: "bg-[#F0F9FF] text-[#0ea5e9] border-[#E0F2FE]",
-                    outfordelivery: "bg-[#FFF7ED] text-[#EA580C] border-[#FFEDD5]",
-                    cancelled: "bg-[#FEF2F2] text-[#DC2626] border-[#FEE2E2]",
-                    pending: "bg-[#F8FAFC] text-[#64748B] border-[#F1F5F9]",
+                const colors: any = {
+                    pending: "bg-amber-50 text-amber-700 border-amber-200",
+                    delivered: "bg-emerald-50 text-emerald-700 border-emerald-200",
+                    processing: "bg-blue-50 text-blue-700 border-blue-200",
                 };
                 return (
-                    <div className="flex items-center justify-center h-full">
-                        <div className={`px-4 py-1 text-[10px] font-black uppercase tracking-widest border ${colors[status] || "bg-slate-50 text-slate-400 border-slate-200"}`}>
-                            {params.value}
-                        </div>
+                    <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${colors[status] || "bg-slate-50 text-slate-500 border-slate-200"}`}>
+                        {status || 'Unknown'}
                     </div>
                 );
-            }
+            },
+            filter: 'agTextColumnFilter',
+            floatingFilter: true
         }
     ], []);
 
     const defaultColDef = useMemo<ColDef>(() => ({
         sortable: true,
-        filter: false,
+        filter: true,
         resizable: true,
+        minWidth: 300, // USER REQUIREMENT: Extremely breathable columns
         suppressHeaderMenuButton: true,
         suppressHeaderFilterButton: true,
         headerClass: 'center-header',
+        floatingFilterComponentParams: {
+            suppressFilterButton: true
+        },
         cellStyle: {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            textAlign: 'center' as const,
-            fontSize: '12px',
-            color: '#334155'
+            padding: 0
         }
     }), []);
 
@@ -594,11 +730,11 @@ const Order = () => {
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={exportToPdf} className="flex items-center gap-3 h-12 px-4 cursor-pointer hover:bg-slate-50 focus:bg-slate-50 rounded-none group transition-colors">
                                         <FileText size={18} className="text-slate-400 group-hover:text-primary transition-colors" />
-                                        <span className="text-xs font-black uppercase tracking-wider text-slate-900">Document (PDF)</span>
+                                        <span className="text-xs font-black uppercase tracking-wider text-slate-900">Document (PDF) - All Details</span>
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={exportJson} className="flex items-center gap-3 h-12 px-4 cursor-pointer hover:bg-slate-50 focus:bg-slate-50 rounded-none group transition-colors">
-                                        <FileJson size={18} className="text-slate-400 group-hover:text-primary transition-colors" />
-                                        <span className="text-xs font-black uppercase tracking-wider text-slate-900">Data Object (JSON)</span>
+                                    <DropdownMenuItem onClick={exportToLabels} className="flex items-center gap-3 h-12 px-4 cursor-pointer hover:bg-slate-50 focus:bg-slate-50 rounded-none group transition-colors">
+                                        <Printer size={18} className="text-slate-400 group-hover:text-primary transition-colors" />
+                                        <span className="text-xs font-black uppercase tracking-wider text-slate-900">Document (PDF) - Lunch Box Labels</span>
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -621,8 +757,8 @@ const Order = () => {
                                 columnDefs={columnDefs}
                                 defaultColDef={defaultColDef}
                                 animateRows={true}
-                                headerHeight={40}
-                                rowHeight={38}
+                                rowHeight={40}
+                                headerHeight={44}
                                 pagination={true}
                                 paginationPageSize={20}
                                 suppressCellFocus={true}
@@ -645,84 +781,93 @@ const Order = () => {
                 /* === AG-GRID ALPINE THEME OVERRIDES === */
                 .ag-theme-alpine {
                     --ag-background-color: #ffffff;
-                    --ag-odd-row-background-color: #fafafa;
-                    --ag-header-background-color: #f1f5f9;
-                    --ag-header-foreground-color: #475569;
-                    --ag-header-cell-hover-background-color: #e8edf2;
-                    --ag-row-hover-color: #f8fafc;
+                    --ag-odd-row-background-color: #fafbfc;
+                    --ag-header-background-color: #f8fafc;
+                    --ag-header-foreground-color: #0f172a;
+                    --ag-header-cell-hover-background-color: #f1f5f9;
+                    --ag-row-hover-color: #fffaf5;
                     --ag-selected-row-background-color: #fff7ed;
-                    --ag-font-size: 12px;
+                    --ag-font-size: 13px;
                     --ag-font-family: 'Inter', system-ui, sans-serif;
                     --ag-border-color: #e2e8f0;
                     --ag-row-border-color: #f1f5f9;
                     --ag-grid-size: 4px;
-                    --ag-list-item-height: 30px;
-                    --ag-cell-horizontal-padding: 8px;
+                    --ag-header-column-separator-display: block;
+                    --ag-header-column-separator-height: 40%;
+                    --ag-header-column-separator-color: #cbd5e1;
                     border: 1px solid #e2e8f0;
                 }
 
-                /* === HEADER CENTERING & STYLING === */
-                .ag-theme-alpine .ag-header {
-                    border-bottom: 2px solid #e2e8f0;
-                    font-weight: 700;
-                }
+                /* === HEADER CENTERING (THE CORRECT WAY) === */
                 .ag-theme-alpine .ag-header-cell {
-                    border-right: 1px solid #e2e8f0;
+                    padding: 0 !important;
+                    background: #f1f5f9;
+                    border-right: 1px solid #e2e8f0 !important;
+                }
+                .ag-theme-alpine .ag-header-cell-comp-wrapper {
+                   display: flex;
+                   flex-direction: column;
                 }
                 .ag-theme-alpine .ag-header-cell-label {
                     display: flex !important;
                     justify-content: center !important;
                     align-items: center !important;
-                    font-weight: 700 !important;
-                    font-size: 11px !important;
+                    width: 100% !important;
+                    padding: 0 !important;
+                    font-weight: 800 !important;
+                    font-size: 10px !important;
+                    color: #1e293b !important;
                     text-transform: uppercase !important;
-                    letter-spacing: 0.07em !important;
-                    color: #64748b !important;
+                    letter-spacing: 0.1em !important;
+                }
+                .ag-header-cell-text {
+                    text-align: center !important;
+                    width: 100% !important;
                 }
 
-                /* === CELL STYLING === */
+                /* === FLOATING FILTER (MINIMALIST) === */
+                .ag-theme-alpine .ag-floating-filter {
+                    padding: 4px 8px !important;
+                    background: #f8fafc;
+                }
+                .ag-theme-alpine .ag-floating-filter-input input {
+                    text-align: center !important;
+                    font-size: 11px !important;
+                    border: 1px solid #e2e8f0 !important;
+                    background: white !important;
+                    border-radius: 4px !important;
+                }
+                .ag-theme-alpine .ag-floating-filter-input input::placeholder {
+                    color: transparent !important;
+                }
+
+                /* === CELL CENTERING (THE CORRECT WAY) === */
                 .ag-theme-alpine .ag-cell {
                     display: flex !important;
                     align-items: center !important;
                     justify-content: center !important;
                     text-align: center !important;
+                    padding: 0 !important; /* CRITICAL */
                     border-right: 1px solid #f1f5f9 !important;
-                    padding: 0 8px !important;
                 }
 
                 /* === ROW STYLING === */
                 .ag-theme-alpine .ag-row {
                     border-bottom: 1px solid #f1f5f9 !important;
-                    transition: background-color 0.1s ease;
                 }
-                .ag-theme-alpine .ag-row-hover {
-                    background-color: #fff5f0 !important;
-                    box-shadow: inset 3px 0 0 #FF6B00;
-                }
-                .ag-theme-alpine .ag-row-even {
-                    background-color: #ffffff;
-                }
-                .ag-theme-alpine .ag-row-odd {
-                    background-color: #fafbfc;
-                }
+                .ag-theme-alpine .ag-row-odd { background-color: #fafbfc; }
+                .ag-theme-alpine .ag-row-even { background-color: #ffffff; }
 
-                /* === SORT ICON CENTERING === */
-                .ag-theme-alpine .ag-sort-indicator-container {
-                    color: #94a3b8;
-                }
-
-                /* === PAGINATION BAR === */
-                .ag-theme-alpine .ag-paging-panel {
-                    border-top: 1px solid #e2e8f0;
-                    font-size: 11px;
-                    color: #64748b;
-                    height: 40px;
+                /* === PINNED COLUMN FIX === */
+                .ag-pinned-left-cols-container {
+                    border-right: 2px solid #e2e8f0 !important;
+                    box-shadow: 4px 0 10px rgba(0,0,0,0.02) !important;
                 }
 
                 /* === SCROLLBAR === */
-                .ag-body-viewport::-webkit-scrollbar { width: 6px; height: 6px; }
+                .ag-body-viewport::-webkit-scrollbar { width: 8px; height: 8px; }
                 .ag-body-viewport::-webkit-scrollbar-track { background: #f8fafc; }
-                .ag-body-viewport::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 6px; }
+                .ag-body-viewport::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
                 .ag-body-viewport::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
             `}</style>
         </div>
