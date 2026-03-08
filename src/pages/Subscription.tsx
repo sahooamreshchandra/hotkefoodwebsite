@@ -597,7 +597,7 @@ const Subscription = () => {
                                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                                 </div>
                                 <h1 className="text-4xl font-display font-black text-slate-900 uppercase tracking-tighter flex items-center gap-1">
-                                    <span className="text-primary">Delivery</span>
+                                    <span className="text-primary">Subscription</span>
                                     <span>Manager</span>
                                 </h1>
                                 <p className="text-slate-400 text-[10px] font-bold mt-1.5 uppercase tracking-widest flex items-center gap-2">
