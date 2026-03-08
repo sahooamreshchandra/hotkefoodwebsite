@@ -22,6 +22,9 @@ import * as XLSX from "xlsx";
 // Register Ag-Grid modules
 ModuleRegistry.registerModules([AllCommunityModule]);
 
+// Assets
+import logo from "../assets/logo.png";
+
 // --- Data Models ---
 enum OrderStatus {
     pending = "pending",
@@ -205,6 +208,7 @@ const Order = () => {
                         const m = String(dateObj.getMonth() + 1).padStart(2, '0');
                         const y = dateObj.getFullYear();
                         fulfillmentDateFormatted = `${d}-${m}-${y}`;
+                        (order as any).rawFulfillmentDate = dateObj; // Store for filtering
                     }
                 }
             } catch (e) {
@@ -287,17 +291,16 @@ const Order = () => {
         });
 
         const worksheet = XLSX.utils.json_to_sheet(filteredData.map(o => ({
-            OrderID: o.id,
             OrderDate: o.formattedDate,
             OrderedFor: o.fulfillmentDateFormatted,
-            OrderedBy: o.orderedBy,
-            Category: o.category,
             City: o.cityName,
             School: o.schoolName,
+            Category: o.category,
+            FoodItem: o.fullItems,
+            OrderedBy: o.orderedBy,
+            ChildName: o.childName,
             Class: o.className,
             Section: o.sectionName,
-            ChildName: o.childName,
-            FoodItem: o.fullItems,
             Amount: o.totalAmount,
             Status: o.status
         })));
@@ -347,20 +350,20 @@ const Order = () => {
             const tableData = filteredData.map(o => [
                 String(o.formattedDate || ""),
                 String(o.fulfillmentDateFormatted || ""),
-                String(o.orderedBy || ""),
-                String(o.category || ""),
                 String(o.cityName || "N/A"),
                 String(o.schoolName || ""),
+                String(o.category || ""),
+                String(o.fullItems || ""),
+                String(o.orderedBy || ""),
+                String(o.childName || ""),
                 String(o.className || "N/A"),
                 String(o.sectionName || "N/A"),
-                String(o.childName || ""),
-                String(o.fullItems || ""),
                 String(o.totalAmount || 0),
                 String(o.status || "").toUpperCase()
             ]);
 
             autoTable(doc, {
-                head: [['OrderDate', 'OrderedFor', 'OrderedBy', 'Category', 'City', 'School', 'Class', 'Section', 'ChildName', 'FoodItem', 'Amount', 'Status']],
+                head: [['OrderDate', 'OrderedFor', 'City', 'School', 'Category', 'FoodItem', 'OrderedBy', 'ChildName', 'Class', 'Section', 'Amount', 'Status']],
                 body: tableData,
                 startY: 42,
                 theme: 'grid',
@@ -561,40 +564,66 @@ const Order = () => {
 
     const columnDefs = useMemo<ColDef[]>(() => [
         {
-            field: "id",
-            headerName: "ORDER ID",
-            cellClass: "font-mono text-[10px] text-slate-500 font-bold tracking-tight",
-            pinned: 'left',
-            filter: 'agTextColumnFilter',
-            floatingFilter: true
-        },
-        {
-            field: "formattedDate",
+            field: "orderDate",
             headerName: "ORDER DATE",
             cellClass: "text-slate-400 font-medium text-[11px]",
             filter: 'agDateColumnFilter',
-            floatingFilter: true
+            floatingFilter: true,
+            pinned: 'left',
+            filterParams: {
+                comparator: (filterLocalDateAtMidnight: Date, cellValue: Date) => {
+                    if (cellValue == null) return -1;
+                    const cellDate = new Date(cellValue.getTime());
+                    cellDate.setHours(0, 0, 0, 0);
+                    const filterDate = new Date(filterLocalDateAtMidnight.getTime());
+                    filterDate.setHours(0, 0, 0, 0);
+
+                    if (cellDate < filterDate) return -1;
+                    if (cellDate > filterDate) return 1;
+                    return 0;
+                }
+            },
+            valueFormatter: (params) => {
+                const date = params.value;
+                if (!(date instanceof Date) || isNaN(date.getTime())) return "N/A";
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = date.getFullYear();
+                let hours = date.getHours();
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12;
+                hours = hours ? hours : 12;
+                return `${day}-${month}-${year} ${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
+            }
         },
         {
-            field: "fulfillmentDateFormatted",
+            field: "rawFulfillmentDate",
             headerName: "ORDERED FOR",
             cellClass: "text-orange-600 font-bold text-[11px]",
             filter: 'agDateColumnFilter',
-            floatingFilter: true
-        },
-        {
-            field: "orderedBy",
-            headerName: "ORDERED BY",
-            cellClass: "font-semibold text-slate-800 text-[12px]",
-            filter: 'agTextColumnFilter',
-            floatingFilter: true
-        },
-        {
-            field: "category",
-            headerName: "CATEGORY",
-            cellClass: "text-slate-500 font-black text-[10px] uppercase",
-            filter: 'agTextColumnFilter',
-            floatingFilter: true
+            floatingFilter: true,
+            filterParams: {
+                comparator: (filterLocalDateAtMidnight: Date, cellValue: Date) => {
+                    if (cellValue == null) return -1;
+                    const cellDate = new Date(cellValue.getTime());
+                    cellDate.setHours(0, 0, 0, 0);
+                    const filterDate = new Date(filterLocalDateAtMidnight.getTime());
+                    filterDate.setHours(0, 0, 0, 0);
+
+                    if (cellDate < filterDate) return -1;
+                    if (cellDate > filterDate) return 1;
+                    return 0;
+                }
+            },
+            valueFormatter: (params) => {
+                const date = params.value;
+                if (!(date instanceof Date) || isNaN(date.getTime())) return "N/A";
+                const d = String(date.getDate()).padStart(2, '0');
+                const m = String(date.getMonth() + 1).padStart(2, '0');
+                const y = date.getFullYear();
+                return `${d}-${m}-${y}`;
+            }
         },
         {
             field: "cityName",
@@ -607,6 +636,35 @@ const Order = () => {
             field: "schoolName",
             headerName: "SCHOOL",
             cellClass: "font-medium text-slate-700 text-[12px]",
+            filter: 'agTextColumnFilter',
+            floatingFilter: true
+        },
+        {
+            field: "category",
+            headerName: "CATEGORY",
+            cellClass: "text-slate-500 font-black text-[10px] uppercase",
+            filter: 'agTextColumnFilter',
+            floatingFilter: true
+        },
+        {
+            headerName: "FOODITEM",
+            flex: 1,
+            field: "fullItems",
+            cellClass: "text-slate-500 font-medium text-[11px] italic leading-tight",
+            filter: 'agTextColumnFilter',
+            floatingFilter: true
+        },
+        {
+            field: "orderedBy",
+            headerName: "ORDERED BY",
+            cellClass: "font-semibold text-slate-800 text-[12px]",
+            filter: 'agTextColumnFilter',
+            floatingFilter: true
+        },
+        {
+            field: "childName",
+            headerName: "CHILDNAME",
+            cellClass: "font-black text-primary text-[13px] uppercase tracking-tight",
             filter: 'agTextColumnFilter',
             floatingFilter: true
         },
@@ -625,26 +683,18 @@ const Order = () => {
             floatingFilter: true
         },
         {
-            field: "childName",
-            headerName: "CHILDNAME",
-            cellClass: "font-black text-primary text-[13px] uppercase tracking-tight",
-            filter: 'agTextColumnFilter',
-            floatingFilter: true
-        },
-        {
-            headerName: "FOODITEM",
-            flex: 1,
-            field: "fullItems",
-            cellClass: "text-slate-500 font-medium text-[11px] italic leading-tight",
-            filter: 'agTextColumnFilter',
-            floatingFilter: true
-        },
-        {
             field: "totalAmount",
             headerName: "AMOUNT",
             valueFormatter: (params) => `₹${params.value?.toLocaleString()}`,
             cellClass: "font-mono font-black text-slate-900 text-[14px]",
             filter: 'agNumberColumnFilter',
+            floatingFilter: true
+        },
+        {
+            field: "id",
+            headerName: "ORDER ID",
+            cellClass: "font-mono text-[10px] text-slate-500 font-bold tracking-tight",
+            filter: 'agTextColumnFilter',
             floatingFilter: true
         },
         {
@@ -742,8 +792,8 @@ const Order = () => {
                     {/* modern enterprise header */}
                     <div className="flex flex-col md:flex-row justify-between items-center gap-8 mb-8 pb-8 border-b border-slate-200">
                         <div className="flex items-center gap-6">
-                            <div className="w-16 h-16 bg-slate-900 flex items-center justify-center text-white shadow-xl">
-                                <LayoutDashboard size={32} />
+                            <div className="w-16 h-16 bg-white flex items-center justify-center p-2 shadow-xl border border-slate-100">
+                                <img src={logo} alt="hotkefood" className="w-full h-full object-contain" />
                             </div>
                             <div>
                                 <div className="flex items-center gap-2 mb-1">
