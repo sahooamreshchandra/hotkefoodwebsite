@@ -82,7 +82,7 @@ const Subscription = () => {
     const gridRef = useRef<AgGridReact<any>>(null);
 
     const handleVerify = () => {
-        const secretGuid = import.meta.env.VITE_SUBSCRIPTION_PAGE_ACCESS_KEY;
+        const secretGuid = import.meta.env.VITE_ORDER_PAGE_ACCESS_KEY;
         if (!secretGuid || enteredKey === secretGuid) {
             setIsAuthorized(true);
         } else {
@@ -532,27 +532,28 @@ const Subscription = () => {
         }
     }), []);
 
-    if (isAuthorized === false && import.meta.env.VITE_SUBSCRIPTION_PAGE_ACCESS_KEY) {
+    const secretKey = import.meta.env.VITE_ORDER_PAGE_ACCESS_KEY;
+    if (isAuthorized === false && secretKey) {
         return (
-            <div className="h-screen w-screen bg-neutral-950 flex items-center justify-center font-display p-6 overflow-hidden">
+            <div className="h-screen w-screen bg-slate-950 flex items-center justify-center font-display p-6 overflow-hidden">
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="max-w-md w-full bg-neutral-900 border border-neutral-800 p-12 text-center shadow-2xl relative"
+                    className="max-w-md w-full bg-slate-900 border border-slate-800 p-12 text-center shadow-2xl relative"
                 >
                     <div className="w-20 h-20 bg-primary/10 text-primary flex items-center justify-center mx-auto mb-8 rounded-full border border-primary/20">
                         <Lock size={40} />
                     </div>
-                    <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-4">Subscription Access</h2>
-                    <p className="text-neutral-400 text-sm leading-relaxed mb-8">
-                        Enter your subscription management portal access key to continue.
+                    <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-4">Terminal Locked</h2>
+                    <p className="text-slate-400 text-sm leading-relaxed mb-8">
+                        This environment is protected. Please enter your administrator access key to continue.
                     </p>
 
                     <div className="space-y-4">
                         <input
                             type="password"
                             placeholder="Enter Security GUID..."
-                            className="w-full bg-neutral-950 border border-neutral-800 h-14 px-6 text-white text-center font-mono tracking-widest focus:outline-none focus:border-primary transition-all text-lg"
+                            className="w-full bg-slate-950 border border-slate-800 h-14 px-6 text-white text-center font-mono tracking-widest focus:outline-none focus:border-primary transition-all text-lg"
                             value={enteredKey}
                             onChange={(e) => setEnteredKey(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleVerify()}
@@ -566,8 +567,8 @@ const Subscription = () => {
                         </button>
                     </div>
 
-                    <div className="pt-12 mt-8 border-t border-neutral-800">
-                        <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-neutral-600 italic">hotkefood security gateway v3.0</p>
+                    <div className="pt-12 mt-8 border-t border-slate-800">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-600 italic">hotkefood security gateway v3.0</p>
                     </div>
                 </motion.div>
             </div>
