@@ -144,7 +144,7 @@ const Subscription = () => {
                 styles: { fontSize: 7, cellPadding: 2 }
             });
             doc.save(`hotkefood_subscriptions_${new Date().toISOString().split('T')[0]}.pdf`);
-        } catch (err) { console.error("PDF Export Error:", err); }
+        } catch (err) { /* silent fail */ }
     };
 
     const exportToPdfLabel = () => {
@@ -216,7 +216,7 @@ const Subscription = () => {
             });
 
             doc.save(`hotkefood_labels_${new Date().toISOString().split('T')[0]}.pdf`);
-        } catch (err) { console.error("Label Export Error:", err); }
+        } catch (err) { /* silent fail */ }
     };
 
     const deliveryList = useMemo(() => {
@@ -280,7 +280,7 @@ const Subscription = () => {
                     if (city) cityName = city.name;
                 }
 
-                console.log(`🔍 Child [${child.id}] sectionId=${child.sectionId} → school=${schoolName} class=${className} section=${sectionName} city=${cityName}`);
+
             }
 
             const progress = `${sub.mealsDelivered ?? 0} / ${(sub.mealsDelivered ?? 0) + (sub.mealsRemaining ?? 0)}`;
@@ -362,7 +362,7 @@ const Subscription = () => {
         const sync = (names: string[], setter: any, label: string) => {
             names.forEach(name => {
                 const unsub = onSnapshot(collection(db, name), (snap) => {
-                    console.log(`📡 [${name}] Update: ${snap.empty ? 'empty' : snap.size + ' records'}`);
+
 
                     if (!snap.empty) {
                         const data = snap.docs.map(d => ({ id: d.id, _collection: name, ...d.data() }));
@@ -379,7 +379,7 @@ const Subscription = () => {
                         setLoading(false);
                     }
                 }, (err) => {
-                    console.error(`❌ ${label} [${name}] Error:`, err);
+
                     if (name.toLowerCase().includes("sub") && !hasResolvedSubs) {
                         setLoading(false);
                     }
@@ -412,19 +412,7 @@ const Subscription = () => {
     // Diagnostic log in separate effect to track state changes
     useEffect(() => {
         if (!loading) {
-            console.log("📊 SUBSCRIPTION PAGE STATE:");
-            console.log("- Selected Date:", selectedDate);
-            console.log("- Total Subscriptions:", userSubscriptions.length);
-            console.log("- Children Data:", children.length);
-            console.log("- Users Data:", users.length);
-            console.log("- Food Items:", foodItems.length);
-            console.log("- Schools:", schools.length);
-            console.log("- Filtered Delivery List:", deliveryList.length);
 
-            if (userSubscriptions.length > 0 && deliveryList.length === 0) {
-                console.log("⚠️ Data loaded but filtered list is empty. Sample sub for debug:", userSubscriptions[0]);
-                console.log("   Checking for date keys in mealSelections:", Object.keys(userSubscriptions[0].mealSelections || {}));
-            }
         }
     }, [userSubscriptions, children, users, foodItems, schools, selectedDate, loading, deliveryList.length]);
 

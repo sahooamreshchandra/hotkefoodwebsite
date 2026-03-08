@@ -193,7 +193,7 @@ const Order = () => {
                     formattedDate = `${day}-${month}-${year} ${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
                 }
             } catch (e) {
-                console.error("❌ Date Format Error:", e);
+                /* silent fail */
             }
 
             // Format fulfillment date (Ordered For)
@@ -212,7 +212,7 @@ const Order = () => {
                     }
                 }
             } catch (e) {
-                console.error("❌ Fulfillment Date Error:", e);
+                /* silent fail */
             }
 
             // Resolve Category Name: Iterate through all items in the order
@@ -245,7 +245,7 @@ const Order = () => {
                     }
                 }
             } catch (e) {
-                console.error("❌ Category Resolve Error:", e);
+                /* silent fail */
             }
             const categoryLabel = categoryNames.length > 0 ? categoryNames.join(", ") : "N/A";
 
@@ -263,7 +263,7 @@ const Order = () => {
 
             // Diagnostic to see what's actually in these fields safely
             if (index < 5) {
-                console.log(`🔍 Order ${order.id} | listingId: ${(order as any).listingId} | childId: ${order.childId} | schoolId: ${order.schoolId} | schoolFound: ${school?.name}`);
+
             }
 
             return {
@@ -318,7 +318,7 @@ const Order = () => {
                 if (node.data) filteredData.push(node.data);
             });
 
-            console.log("📄 Starting All Details PDF Export...");
+
             const doc = new jsPDF('l', 'mm', 'a4');
             const totalAmount = filteredData.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
             const primaryOrange = [255, 107, 0] as [number, number, number];
@@ -396,10 +396,10 @@ const Order = () => {
                 }
             });
 
-            console.log("💾 Triggering details PDF save...");
+
             doc.save(`HOTKE_DETAILS_${new Date().toISOString().split('T')[0]}.pdf`);
         } catch (err) {
-            console.error("❌ PDF Error:", err);
+            /* silent fail */
             alert("Export Error: " + (err instanceof Error ? err.message : String(err)));
         }
     };
@@ -477,7 +477,7 @@ const Order = () => {
 
             doc.save(`hotkefood_order_labels_${new Date().toISOString().split('T')[0]}.pdf`);
         } catch (err) {
-            console.error("❌ Label Error:", err);
+            /* silent fail */
             alert("Label Export Error: " + (err instanceof Error ? err.message : String(err)));
         }
     };
@@ -485,23 +485,23 @@ const Order = () => {
     // Removed exportJson as requested
 
     useEffect(() => {
-        console.log("🔍 SYNCING LIVE ORDER DATABASE & METADATA");
+        /* silent fail */
         setError(null);
 
         // Metadata Sync (Multi-case support)
         const syncMetadata = (names: string[], setter: any, label: string) => {
             return names.map(name => onSnapshot(collection(db, name), (snap) => {
                 if (!snap.empty) {
-                    console.log(`✅ [${name}] Metadata Sync: ${snap.size} records`);
+
                     setter((prev: any) => {
                         const newData = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                         // Merge or replace based on logic (here we just replace if not empty)
                         return newData;
                     });
                 } else {
-                    console.log(`ℹ️ [${name}] Collection empty/restricted`);
+
                 }
-            }, (err) => console.error(`❌ ${label} [${name}] Error:`, err)));
+            }, (err) => { /* silent fail */ }));
         };
 
         const unsubsSchools = syncMetadata(["Schools", "schools"], setSchools, "Schools");
@@ -520,8 +520,7 @@ const Order = () => {
 
             return onSnapshot(q, (snapshot) => {
                 if (!snapshot.empty) {
-                    console.log(`✅ [${collName}] Data detected (${snapshot.size} docs)`);
-                    console.log("📄 SAMPLE DOC STRUCTURE:", snapshot.docs[0].data());
+
                     lastSyncSource = collName;
                     const ordersData = snapshot.docs.map((doc) => {
                         const data = doc.data();
@@ -537,7 +536,7 @@ const Order = () => {
                     setLoading(false);
                     setError(null);
                 } else {
-                    console.log(`ℹ️ [${collName}] Collection is empty or restricted`);
+
                     // If we previously had data from this source and now it's empty, update it
                     // But if we have data from another source, don't let an empty sync from a "wrong" collection name wipe it out
                     if (lastSyncSource === collName || !lastSyncSource) {
@@ -545,7 +544,7 @@ const Order = () => {
                     }
                 }
             }, (err) => {
-                console.error(`❌ [${collName}] Error:`, err.message);
+                /* silent fail */
                 if (!lastSyncSource) setError(err.message);
             });
         };
