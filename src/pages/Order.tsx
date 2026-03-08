@@ -407,72 +407,75 @@ const Order = () => {
     const exportToLabels = () => {
         try {
             if (!gridRef.current?.api) return;
-
             const filteredData: any[] = [];
             gridRef.current.api.forEachNodeAfterFilter((node) => {
                 if (node.data) filteredData.push(node.data);
             });
 
-            console.log("🏷️ Starting Lunch Box Label Export...");
+            if (!filteredData.length) return;
+
             const doc = new jsPDF('p', 'mm', 'a4');
             const primaryOrange = [255, 107, 0] as [number, number, number];
+            const pageW = 210;
+            const pageH = 297;
+            const cols = 2;
+            const rows = 5;
+            const labelW = pageW / cols - 10;
+            const labelH = pageH / rows - 8;
+            const marginX = 5;
+            const marginY = 5;
 
-            const labelWidth = 90;
-            const labelHeight = 55;
-            const margin = 10;
-            const gap = 5;
+            filteredData.forEach((o, idx) => {
+                const posOnPage = idx % (cols * rows);
+                const col = posOnPage % cols;
+                const row = Math.floor(posOnPage / cols);
 
-            let x = margin;
-            let y = margin;
+                if (idx > 0 && posOnPage === 0) doc.addPage();
 
-            filteredData.forEach((order, index) => {
-                if (index > 0 && index % 10 === 0) {
-                    doc.addPage();
-                    x = margin;
-                    y = margin;
-                }
+                const x = marginX + col * (labelW + 10);
+                const y = marginY + row * (labelH + 8);
 
-                doc.setDrawColor(226, 232, 240);
-                doc.setLineWidth(0.5);
-                doc.rect(x, y, labelWidth, labelHeight);
+                // Label box
+                doc.setDrawColor(200, 200, 200);
+                doc.setLineWidth(0.3);
+                doc.roundedRect(x, y, labelW, labelH, 3, 3);
 
-                doc.setFontSize(10);
-                doc.setTextColor(primaryOrange[0], primaryOrange[1], primaryOrange[2]);
-                doc.setFont("helvetica", "bold");
-                doc.text("hotkefood", x + 5, y + 8);
-
-                doc.setFontSize(8);
-                doc.setTextColor(100, 116, 139);
-                doc.setFont("helvetica", "normal");
-                doc.text(order.fulfillmentDateFormatted || "", x + labelWidth - 25, y + 8);
-
-                doc.setFontSize(12);
-                doc.setTextColor(15, 23, 42);
-                doc.setFont("helvetica", "bold");
-                doc.text(order.childName || "STAFF", x + 5, y + 18);
-
+                // Brand header
+                doc.setFillColor(primaryOrange[0], primaryOrange[1], primaryOrange[2]);
+                doc.roundedRect(x, y, labelW, 10, 3, 3, 'F');
+                doc.rect(x, y + 5, labelW, 5, 'F'); // bottom-flat
                 doc.setFontSize(9);
-                doc.setTextColor(51, 65, 85);
-                doc.text(`${order.schoolName}`, x + 5, y + 24);
-                doc.text(`Grade ${order.className || 'N/A'} - ${order.sectionName || 'N/A'}`, x + 5, y + 29);
+                doc.setTextColor(255, 255, 255);
+                doc.setFont('helvetica', 'bold');
+                doc.text('hotkefood', x + 3, y + 7);
+                doc.setFontSize(6);
+                doc.text(o.fulfillmentDateFormatted || "", x + labelW - 3, y + 7, { align: 'right' });
 
-                doc.setDrawColor(241, 245, 249);
-                doc.line(x + 5, y + 33, x + labelWidth - 5, y + 33);
-
+                // Content
+                doc.setTextColor(30, 30, 30);
+                doc.setFont('helvetica', 'bold');
                 doc.setFontSize(10);
-                doc.setTextColor(primaryOrange[0], primaryOrange[1], primaryOrange[2]);
-                doc.setFont("helvetica", "bold");
-                doc.text(order.fullItems || "", x + 5, y + 42, { maxWidth: labelWidth - 10 });
+                doc.text(o.childName || '—', x + 3, y + 17);
 
-                if (index % 2 === 0) {
-                    x += labelWidth + gap;
-                } else {
-                    x = margin;
-                    y += labelHeight + gap;
-                }
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(7);
+                doc.setTextColor(80, 80, 80);
+                const school = o.schoolName && o.schoolName !== 'N/A' ? o.schoolName : '';
+                const clsSec = [o.className, o.sectionName].filter((v: string) => v && v !== 'N/A' && v !== '').join(' / ');
+                if (school) doc.text(school, x + 3, y + 23);
+                if (clsSec) doc.text(clsSec, x + 3, y + 28);
+                if (o.cityName && o.cityName !== 'N/A' && o.cityName !== '') doc.text(`${o.cityName}`, x + 3, y + 33);
+
+                // Meal
+                doc.setFillColor(245, 245, 245);
+                doc.rect(x + 2, y + 36, labelW - 4, 10, 'F');
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(8);
+                doc.setTextColor(primaryOrange[0], primaryOrange[1], primaryOrange[2]);
+                doc.text(`${o.fullItems}`, x + 4, y + 43, { maxWidth: labelW - 8 });
             });
 
-            doc.save(`HOTKE_LABELS_${new Date().toISOString().split('T')[0]}.pdf`);
+            doc.save(`hotkefood_order_labels_${new Date().toISOString().split('T')[0]}.pdf`);
         } catch (err) {
             console.error("❌ Label Error:", err);
             alert("Label Export Error: " + (err instanceof Error ? err.message : String(err)));
@@ -569,7 +572,6 @@ const Order = () => {
             cellClass: "text-slate-400 font-medium text-[11px]",
             filter: 'agDateColumnFilter',
             floatingFilter: true,
-            pinned: 'left',
             filterParams: {
                 comparator: (filterLocalDateAtMidnight: Date, cellValue: Date) => {
                     if (cellValue == null) return -1;
@@ -955,10 +957,6 @@ const Order = () => {
                 .ag-theme-alpine .ag-row-odd { background-color: #fafbfc; }
                 .ag-theme-alpine .ag-row-even { background-color: #ffffff; }
 
-                .ag-pinned-left-cols-container {
-                    border-right: 2px solid #e2e8f0 !important;
-                    box-shadow: 4px 0 10px rgba(0,0,0,0.02) !important;
-                }
 
                 .ag-body-viewport::-webkit-scrollbar { width: 8px; height: 8px; }
                 .ag-body-viewport::-webkit-scrollbar-track { background: #f8fafc; }

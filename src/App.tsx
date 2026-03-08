@@ -7,6 +7,8 @@ import Index from "./pages/Index";
 import Order from "./pages/Order";
 import NotFound from "./pages/NotFound";
 
+import Subscription from "./pages/Subscription";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -18,6 +20,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/order" element={<Order />} />
+          <Route path="/subscription" element={<Subscription />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
