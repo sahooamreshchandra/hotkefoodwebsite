@@ -84,7 +84,7 @@ const Hero = () => {
           <img
             src={slides[current].image}
             alt={slides[current].title}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover object-[center_20%] md:object-[70%_20%] lg:object-[65%_15%]"
           />
         </motion.div>
       </AnimatePresence>

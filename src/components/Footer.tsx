@@ -20,7 +20,7 @@ const Footer = () => {
           {/* Legal Disclaimer */}
           <div className="max-w-xl">
             <p className="text-white/30 text-[9px] leading-relaxed uppercase tracking-wider lg:text-right">
-              hotke<span className="text-primary/70">food</span> is a proposed partnership firm. Partnership registration is under process.
+              hotke<span className="text-primary/70">food</span> is a proposed partnership firm.
               Food services will commence only after obtaining all required registrations including FSSAI.
             </p>
           </div>
