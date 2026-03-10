@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo, useRef } from "react";
-import { collection, onSnapshot, query, where, doc, updateDoc, increment, Timestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { useState, useMemo, useRef } from "react";
+import { Timestamp } from "firebase/firestore";
+import { useFirestoreData } from "@/hooks/useFirestoreData";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Download, RefreshCw, LayoutDashboard, ChevronDown, FileText, FileSpreadsheet, Lock, CheckCircle2, Calendar as CalendarIcon, User, GraduationCap, MapPin, Package } from "lucide-react";
 import { AgGridReact } from "ag-grid-react";
@@ -68,13 +68,17 @@ interface SchoolData {
 }
 
 const Subscription = () => {
-    const [userSubscriptions, setUserSubscriptions] = useState<UserSubscription[]>([]);
-    const [children, setChildren] = useState<ChildData[]>([]);
-    const [users, setUsers] = useState<UserData[]>([]);
-    const [foodItems, setFoodItems] = useState<FoodItemData[]>([]);
-    const [schools, setSchools] = useState<SchoolData[]>([]);
-    const [cities, setCities] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
+    // One-time getDocs fetches — no persistent listeners
+    const { data: userSubscriptions, loading: subsLoading } = useFirestoreData<UserSubscription>(
+        ["user_subscriptions", "UserSubscriptions", "UserSubscription", "user_subscription", "userSubscriptions", "subscriptions", "Subscription"]
+    );
+    const { data: children } = useFirestoreData<ChildData>(["Children", "children", "childs"]);
+    const { data: users } = useFirestoreData<UserData>(["Users", "users"]);
+    const { data: foodItems } = useFirestoreData<FoodItemData>(["FoodItems", "foodItems", "food_items", "FoodItem"]);
+    const { data: schools } = useFirestoreData<SchoolData>(["Schools", "schools"]);
+    const { data: cities } = useFirestoreData<any>(["Cities", "cities"]);
+
+    const loading = subsLoading;
     const [selectedDate, setSelectedDate] = useState("");
     const [searchText, setSearchText] = useState("");
     const [isAuthorized, setIsAuthorized] = useState<boolean | null>(false);
@@ -355,66 +359,7 @@ const Subscription = () => {
         });
     }, [userSubscriptions, children, users, foodItems, schools, cities, selectedDate]);
 
-    useEffect(() => {
-        const unsubs: any[] = [];
-        let hasResolvedSubs = false;
 
-        const sync = (names: string[], setter: any, label: string) => {
-            names.forEach(name => {
-                const unsub = onSnapshot(collection(db, name), (snap) => {
-
-
-                    if (!snap.empty) {
-                        const data = snap.docs.map(d => ({ id: d.id, _collection: name, ...d.data() }));
-                        setter((prev: any) => {
-                            const newIds = new Set(data.map((i: any) => i.id));
-                            const others = prev.filter((i: any) => !newIds.has(i.id));
-                            return [...others, ...data];
-                        });
-                    }
-
-                    // Resolve loading
-                    if (name.toLowerCase().includes("sub") && !hasResolvedSubs) {
-                        hasResolvedSubs = true;
-                        setLoading(false);
-                    }
-                }, (err) => {
-
-                    if (name.toLowerCase().includes("sub") && !hasResolvedSubs) {
-                        setLoading(false);
-                    }
-                });
-                unsubs.push(unsub);
-            });
-        };
-
-        sync(["user_subscriptions", "UserSubscriptions", "UserSubscription", "user_subscription", "userSubscriptions", "subscriptions", "Subscription"], setUserSubscriptions, "Subscriptions");
-        sync(["Children", "children", "childs"], setChildren, "Children");
-        sync(["Users", "users"], setUsers, "Users");
-        sync(["FoodItems", "foodItems", "food_items", "FoodItem"], setFoodItems, "FoodItems");
-        sync(["Schools", "schools"], setSchools, "Schools");
-        sync(["Cities", "cities"], setCities, "Cities");
-
-        // Fallback for loading after 5s
-        const timeout = setTimeout(() => {
-            if (!hasResolvedSubs) {
-                setLoading(false);
-                hasResolvedSubs = true;
-            }
-        }, 5000);
-
-        return () => {
-            unsubs.forEach(u => u());
-            clearTimeout(timeout);
-        };
-    }, []);
-
-    // Diagnostic log in separate effect to track state changes
-    useEffect(() => {
-        if (!loading) {
-
-        }
-    }, [userSubscriptions, children, users, foodItems, schools, selectedDate, loading, deliveryList.length]);
 
     const columnDefs = useMemo<ColDef[]>(() => [
         {

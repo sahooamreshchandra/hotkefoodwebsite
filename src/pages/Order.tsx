@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo, useRef } from "react";
-import { collection, onSnapshot, query, orderBy, Timestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { useState, useMemo, useRef } from "react";
+import { Timestamp } from "firebase/firestore";
+import { useFirestoreData } from "@/hooks/useFirestoreData";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Download, RefreshCw, PackageCheck, LayoutDashboard, Database, ChevronRight, FileText, FileJson, Printer, ChevronDown, Table as TableIcon, FileSpreadsheet, ShieldAlert, ShieldCheck, Lock } from "lucide-react";
 import { AgGridReact } from "ag-grid-react";
@@ -107,16 +107,20 @@ interface CategoryData {
 }
 
 const Order = () => {
-    const [orders, setOrders] = useState<Order[]>([]);
-    const [schools, setSchools] = useState<SchoolData[]>([]);
-    const [children, setChildren] = useState<ChildData[]>([]);
-    const [cities, setCities] = useState<CityData[]>([]);
-    const [listings, setListings] = useState<ListingData[]>([]);
-    const [foodItems, setFoodItems] = useState<FoodItemData[]>([]);
-    const [categories, setCategories] = useState<CategoryData[]>([]);
-    const [users, setUsers] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    // One-time getDocs fetches — no persistent listeners
+    const { data: orders, loading: ordersLoading } = useFirestoreData<Order>(
+        ["orders", "Orders"],
+        { orderByField: "orderDate", orderDirection: "desc" }
+    );
+    const { data: schools, loading: schoolsLoading } = useFirestoreData<SchoolData>(["Schools", "schools"]);
+    const { data: children, loading: childrenLoading } = useFirestoreData<ChildData>(["Children", "children"]);
+    const { data: cities } = useFirestoreData<CityData>(["Cities", "cities"]);
+    const { data: listings } = useFirestoreData<ListingData>(["Listings", "listings"]);
+    const { data: foodItems } = useFirestoreData<FoodItemData>(["FoodItems", "foodItems"]);
+    const { data: categories } = useFirestoreData<CategoryData>(["Categories", "categories"]);
+    const { data: users } = useFirestoreData<any>(["Users", "users"]);
+
+    const loading = ordersLoading || schoolsLoading || childrenLoading;
     const [searchText, setSearchText] = useState("");
     const [isAuthorized, setIsAuthorized] = useState<boolean | null>(false); // Start locked
     const [enteredKey, setEnteredKey] = useState("");
@@ -132,8 +136,21 @@ const Order = () => {
         }
     };
 
+    // Order date conversion — hook returns raw Firestore data, convert Timestamps to Date objects
+    const processedOrders = useMemo(() => {
+        return orders.map((order) => {
+            const data = order as any;
+            return {
+                ...data,
+                orderDate: data.orderDate instanceof Timestamp ? data.orderDate.toDate() :
+                    (data.timestamp instanceof Timestamp ? data.timestamp.toDate() :
+                        (data.orderDate ? new Date(data.orderDate) : new Date())),
+            } as Order;
+        });
+    }, [orders]);
+
     const detailedOrders = useMemo(() => {
-        return orders.map((order, index) => {
+        return processedOrders.map((order, index) => {
             const child = children.find(c => c.id === order.childId);
             const staffUser = users.find(u => u.id === (order as any).userId || u.id === (order as any).staffId);
 
@@ -280,7 +297,7 @@ const Order = () => {
                 fullItems: [...(order.items || []), ...(order.miscItems || [])].map(i => `${i?.foodName || "Unknown"} (x${i?.quantity || 0})`).join(", ")
             };
         });
-    }, [orders, schools, children, cities]);
+    }, [processedOrders, schools, children, cities, listings, foodItems, categories, users]);
 
     const exportToExcel = () => {
         if (!gridRef.current?.api) return;
@@ -483,86 +500,6 @@ const Order = () => {
     };
 
     // Removed exportJson as requested
-
-    useEffect(() => {
-        /* silent fail */
-        setError(null);
-
-        // Metadata Sync (Multi-case support)
-        const syncMetadata = (names: string[], setter: any, label: string) => {
-            return names.map(name => onSnapshot(collection(db, name), (snap) => {
-                if (!snap.empty) {
-
-                    setter((prev: any) => {
-                        const newData = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                        // Merge or replace based on logic (here we just replace if not empty)
-                        return newData;
-                    });
-                } else {
-
-                }
-            }, (err) => { /* silent fail */ }));
-        };
-
-        const unsubsSchools = syncMetadata(["Schools", "schools"], setSchools, "Schools");
-        const unsubsChildren = syncMetadata(["Children", "children"], setChildren, "Children");
-        const unsubsCities = syncMetadata(["Cities", "cities"], setCities, "Cities");
-        const unsubsListings = syncMetadata(["Listings", "listings"], setListings, "Listings");
-        const unsubsFoodItems = syncMetadata(["FoodItems", "foodItems"], setFoodItems, "FoodItems");
-        const unsubsCategories = syncMetadata(["Categories", "categories"], setCategories, "Categories");
-        const unsubsUsers = syncMetadata(["Users", "users"], setUsers, "Users");
-
-        // Robust Order Fetching
-        let lastSyncSource = "";
-
-        const tryFetch = (collName: string) => {
-            const q = query(collection(db, collName), orderBy("orderDate", "desc"));
-
-            return onSnapshot(q, (snapshot) => {
-                if (!snapshot.empty) {
-
-                    lastSyncSource = collName;
-                    const ordersData = snapshot.docs.map((doc) => {
-                        const data = doc.data();
-                        return {
-                            id: doc.id,
-                            ...data,
-                            orderDate: data.orderDate instanceof Timestamp ? data.orderDate.toDate() :
-                                (data.timestamp instanceof Timestamp ? data.timestamp.toDate() :
-                                    (data.orderDate ? new Date(data.orderDate) : new Date())),
-                        } as Order;
-                    });
-                    setOrders(ordersData);
-                    setLoading(false);
-                    setError(null);
-                } else {
-
-                    // If we previously had data from this source and now it's empty, update it
-                    // But if we have data from another source, don't let an empty sync from a "wrong" collection name wipe it out
-                    if (lastSyncSource === collName || !lastSyncSource) {
-                        if (!lastSyncSource) setLoading(false);
-                    }
-                }
-            }, (err) => {
-                /* silent fail */
-                if (!lastSyncSource) setError(err.message);
-            });
-        };
-
-        const unsub1 = tryFetch("orders");
-        const unsub2 = tryFetch("Orders");
-
-        return () => {
-            unsub1(); unsub2();
-            unsubsSchools.forEach(u => u());
-            unsubsChildren.forEach(u => u());
-            unsubsCities.forEach(u => u());
-            unsubsListings.forEach(u => u());
-            unsubsFoodItems.forEach(u => u());
-            unsubsCategories.forEach(u => u());
-            unsubsUsers.forEach(u => u());
-        };
-    }, []);
 
     const columnDefs = useMemo<ColDef[]>(() => [
         {
